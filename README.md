@@ -1,2 +1,2 @@
 # Virtual-Memory-Manager-with-Paged-Segements
-This runs virtual memory manager with different page replacement techniques.
+This runs a virtual memory manager with different page replacement techniques.
