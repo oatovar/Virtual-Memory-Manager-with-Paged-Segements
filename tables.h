@@ -2,17 +2,40 @@
 #define TABLES
 
 #include <cstdlib>
-#include <stringstream>
+#include <cstdio>
+#include <sstream>
+#include <cctype>
 
 using namespace std;
 
-class SegmentTable {
-private:
-	PageTable *top;
-	PageTable *end;
+struct Page {
+	Page *prev = NULL;
+	Page *next = NULL;
+	int entryID = 0;
+	string physicalAddress = "0x00";
+};
+
+class PageTable {
 public:
+	Page *top = NULL;
+	Page *end = NULL;
+	PageTable *prev = NULL;
+	PageTable *next = NULL;
+	int entryID = 0;
+	string physicalAddress = "0x00";
+	PageTable(){};
+	PageTable(int segmentLength);
+	void insert(int pageID);
+};
+
+class SegmentTable {
+public:
+	PageTable *top = NULL;
+	PageTable *end = NULL;
+	string physicalAddress = "0x00";
 	SegmentTable();
 	void insert(int pageTableID);
+	void print();
 };
 
 //This is the default constructor for the Segment Table
@@ -22,38 +45,41 @@ SegmentTable::SegmentTable() {
 
 //This is used to insert a new Page Table entry into the Segment Table
 void SegmentTable::insert(int pageTableID) {
-	PageTable *newEntry = new PageTable;
+	PageTable *newEntry = new PageTable(4);
 	newEntry->entryID = pageTableID;
 	//If the top of the table is empty then insert at the top
 	if (top == NULL) {
 		top = newEntry;
-		end = top;
 	}
 	//Else look for the end of the table
 	else {
-		PageTable *iterator = new PageTable;
-		iterator = top;
-		while (iterator->next != NULL) {
-			iterator = iterator->next;
+		PageTable *itr;
+		itr = top;
+		while (itr->next != NULL) {
+			itr = itr->next;
 		}
-		iterator->next = newEntry;
-		newEntry->prev = iterator;
+		itr->next = newEntry;
+		newEntry->prev = itr;
 		end = newEntry;
 	}
 }
+
+void SegmentTable::print() {
+	PageTable *pageTableItr;
+	pageTableItr = this->top;
+	while (pageTableItr != NULL) {
+		cout << "Table ID: " << setw(2) << pageTableItr->entryID << " Memory Address: " << setfill('0') << pageTableItr->physicalAddress << setfill(' ') << endl;
 		
-
-class PageTable {
-private:
-	Page *top;
-	Page *end;
-public:
-	int entryID = 0;
-	PageTable(){};
-	PageTable(int segmentLength);
-	void insert(i);
-};
-
+		Page *pageItr;
+		pageItr = pageTableItr->top;
+		while (pageItr != NULL) {
+			cout << "Page ID: " << setw(3) << pageItr->entryID << " Memory Address: 0x"<< setfill('0') << setw(2) << pageItr->physicalAddress << setfill(' ') << endl;
+			pageItr = pageItr->next;
+		}
+		
+		pageTableItr = pageTableItr->next;
+	}
+}
 
 
 PageTable::PageTable(int segmentLength) {
@@ -63,37 +89,33 @@ PageTable::PageTable(int segmentLength) {
 }
 
 void PageTable::insert(int pageID) {
-	srand(time(NULL));
-	int memAddr = rand() % 1000 + 1;
-	stringstream sstream;
-	sstream << std::hex << memAddr;
+	int memAddr = rand() % 64 + 1;
+	stringstream ss;
+	ss << std::hex << memAddr;
 	
 	Page *newEntry = new Page;
 	newEntry->entryID = pageID;
-	newEntry->physicalAddress = sstream.str();
+	newEntry->physicalAddress = ss.str();
+	for (int i = 0; i < 2; i++) {
+		if (isalpha(newEntry->physicalAddress[i])) {
+			newEntry->physicalAddress[i] = toupper(newEntry->physicalAddress[i]);
+		}
+	}
 	//Insert at the top of the table if table is empty
 	if (top == NULL) {
 		top = newEntry;
-		end = top;
 	}
 	//Else insert at the bottom of the table
 	else {
-		Page *iterator = new Page;
-		iterator = top;
-		while (iterator->next != NULL) {
-			iterator = iterator->next;
+		Page *itr;
+		itr = top;
+		while (itr->next != NULL) {
+			itr = itr->next;
 		}
-		iterator->next = newEntry;
-		newEntry->prev = iterator;
+		itr->next = newEntry;
+		newEntry->prev = itr;
 		end = newEntry;
 	}
 }
-
-struct Page {
-	Page *prev;
-	Page *next;
-	int entryID = 0;
-	string physicalAddress = "0x0";
-};
 
 #endif
