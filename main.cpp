@@ -5,7 +5,9 @@
 	#include <fstream>
 	#include <list>
 	#include <cmath>
-	//#include "algorithms.h"
+	#include <cstdlib>
+	#include "algorithms.h"
+	#include "tables.h"
 
 	using namespace std;
 
