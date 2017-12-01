@@ -6,8 +6,9 @@
 	#include <list>
 	#include <cmath>
 	#include <cstdlib>
-	#include "algorithms.h"
+	#include "structures.h"
 	#include "tables.h"
+	#include "algorithms.h"
 
 	using namespace std;
 
@@ -16,29 +17,12 @@
 	 * Create Semaphore
 	 * Implement Algorithms
 	 * Create Disk Scheduler
+	 * Create input file that does not generate out of bounds requests.
 	 */
-
-	struct processObject {
-		int pid = 0; //PID which is used as the address space/segment
-		int size = 0; //Max frames that can be allocated to address space
-		int currentFrameCount = 0; //Holds current frame count
-	};
-
-	struct memoryRequest {
-		int addressSpace = 0; //Address Space/PID
-		int segment = 0; //Segment #. In this case PID is the segment #.
-		int page = 0; //Page #
-		int offset = 0; //Offset
-	};
-
-	struct frame {
-		int addressSpace = 0; //Address Space Number/PID
-		int segment = 0; //Segment Number
-		int page = 0; //Page Number
-	};
 
 	int main(int argc, char **argv) {
 		ifstream commandFile(argv[1]);
+		srand(time(NULL));
 	
 		//Error Handling for input file.
 		if (!commandFile.is_open()) {
@@ -123,7 +107,7 @@
 
 			if (regex_search(bufferString, matchResults, end)) {
 				memoryRequest temp;
-				temp.addressSpace = stoi(matchResults[1].str());
+				temp.segment = stoi(matchResults[1].str());
 				temp.offset = -1;
 			
 				pageRequests.insert(pageRequests.end(), temp);
@@ -134,13 +118,9 @@
 				int tempAddress = stoi(matchResults[2].str(), nullptr, 16);
 				cout << "HEX: 0x" << matchResults[2].str() << " DEC: " << tempAddress << endl;
 			
-				int segmentSize = (segmentLength * pageSize);
-			
 				memoryRequest temp;
 			
-				temp.addressSpace = stoi(matchResults[1].str());
-				temp.segment = tempAddress / segmentSize;
-				tempAddress -= (temp.segment * segmentSize);
+				temp.segment = stoi(matchResults[1].str());
 				temp.page = tempAddress / pageSize;
 				temp.offset = tempAddress - (temp.page * pageSize);
 			
@@ -152,8 +132,7 @@
 		cout << "Request Count: " << pageRequests.size() << endl;
 	
 		for (list<memoryRequest>::iterator itr = pageRequests.begin(); itr != pageRequests.end(); ++itr) {
-			cout << "PID: " << setw(3) << itr->addressSpace << " "
-				 << "Segment: " << setw(3) << itr->segment << " "
+			cout << "Segment: " << setw(3) << itr->segment << " "
 				 << "Page: " << setw(2) << itr->page << " "
 				 << "Offset: " << setw(3) << itr->offset
 				 << endl;
@@ -167,6 +146,12 @@
 				 << "Page #: " << setw(3) << itr->page
 				 << endl;
 		}
+		cout << endl;
+		
+		SegmentTable PID1;
+		
+		cout << "Segment Table" << endl;
+		PID1.print();
 	
 		return 0;
 	}
