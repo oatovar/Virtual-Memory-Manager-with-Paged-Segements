@@ -32,6 +32,7 @@ class SegmentTable {
 public:
 	PageTable *top = NULL;
 	PageTable *end = NULL;
+	int addressSpace = 0;
 	string physicalAddress = "0x00";
 	SegmentTable();
 	void insert(int pageTableID);
@@ -73,7 +74,7 @@ void SegmentTable::print() {
 		Page *pageItr;
 		pageItr = pageTableItr->top;
 		while (pageItr != NULL) {
-			cout << "Page ID: " << setw(3) << pageItr->entryID << " Memory Address: 0x"<< setfill('0') << setw(2) << pageItr->physicalAddress << setfill(' ') << endl;
+			cout << "Page ID: " << setw(3) << pageItr->entryID << " Memory Address: 0x" << setfill('0') << setw(2) << pageItr->physicalAddress << setfill(' ') << endl;
 			pageItr = pageItr->next;
 		}
 		
