@@ -4,6 +4,7 @@
 	#include <string>
 	#include <fstream>
 	#include <list>
+	#include <map>
 	#include <cmath>
 	#include <cstdlib>
 	#include "structures.h"
@@ -17,7 +18,10 @@
 	 * Create Semaphore
 	 * Implement Algorithms
 	 * Create Disk Scheduler
-	 * Create input file that does not generate out of bounds requests.
+	 * Need to modify it so that Segment Tables are created by max amount of segments needed.
+	 * Also need to randomly generate new physical addresses for each of the segment tables.
+	 * When generating them must make sure that there are no duplicate addresses
+	 * Can use a hash map for this easily
 	 */
 
 	int main(int argc, char **argv) {
@@ -76,6 +80,14 @@
 	
 		frame emptyFrame;
 		framesTable.assign(totalPages, emptyFrame);
+		
+		list<SegmentTable> SegmentTables;
+		
+		for (int i = 0; i < processCount; i++) {
+			SegmentTable tempTable;
+			tempTable.addressSpace = 100 + i;
+			SegmentTables.insert(SegmentTables.end(), tempTable);
+		}
 	
 		for (int i = 0; i < processCount; i++) {
 			getline(commandFile, bufferString); //Grab the line from the file
@@ -150,11 +162,11 @@
 				 << endl;
 		}
 		cout << endl;
-		
-		SegmentTable PID1;
-		
-		cout << "Segment Table" << endl;
-		PID1.print();
+		//This shows the Segment Tables created with their respective Page Table and Page addresses
+		for (list<SegmentTable>::iterator itr = SegmentTables.begin(); itr != SegmentTables.end(); itr++) {
+			cout << "Segment Table" << endl;
+			itr->print();
+		}
 	
 		return 0;
 	}
