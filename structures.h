@@ -4,6 +4,7 @@
 using namespace std;
 
 struct processObject {
+	int pageFault = 0; //Total amount of page faults that have occurred.
 	int pid = 0; //PID which is used as the address space/segment
 	int size = 0; //Max frames that can be allocated to address space
 	int currentFrameCount = 0; //Holds current frame count
