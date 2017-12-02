@@ -144,9 +144,11 @@
 		cout << endl;
 	
 		cout << "Request Count: " << pageRequests.size() << endl;
-	
+		int index = 0;
 		for (list<memoryRequest>::iterator itr = pageRequests.begin(); itr != pageRequests.end(); ++itr) {
-			cout << "PID: " << setw(3) << itr->addressSpace << " "
+			index++;
+			cout << "Index: " << setw(3) << index << " "
+				 << "PID: " << setw(3) << itr->addressSpace << " "
 				 << "Segment: " << setw(3) << itr->segment << " "
 				 << "Page: " << setw(2) << itr->page << " "
 				 << "Offset: " << setw(3) << itr->offset
@@ -167,6 +169,9 @@
 			cout << "Segment Table" << endl;
 			itr->print();
 		}
+		
+		fifo(framesTable, pageRequests, processList, framesPerProcess, processCount);
+		lifo(framesTable, pageRequests, processList, framesPerProcess, processCount);
 	
 		return 0;
 	}
