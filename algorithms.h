@@ -12,7 +12,7 @@ void fifo(list<frame> currentFrames, list<memoryRequest> currentRequests, proces
 	list<memoryRequest>::iterator requestItr = currentRequests.begin();
 	list<frame>::iterator frameItr = currentFrames.begin();
 	int addressSpace = requestItr->addressSpace - 100;
-	while (requestItr != currentRequest.end()) {
+	while (requestItr != currentRequests.end()) {
         //If you run into the last request for the process just exit out
         if ((requestItr->addressSpace == processNum) && (requestItr->offset == -1)) {
             break;
@@ -79,7 +79,7 @@ void lifo(list<frame> currentFrames, list<memoryRequest> currentRequests, proces
     list<memoryRequest>::iterator requestItr = currentRequests.begin();
     list<frame>::iterator frameItr = currentFrames.end();
     int addressSpace = requestItr->addressSpace - 100;
-    while (requestItr != currentRequest.end()) {
+    while (requestItr != currentRequests.end()) {
         //If you run into the last request for the process just exit out
         if ((requestItr->addressSpace == processNum) && (requestItr->offset == -1)) {
             break;
