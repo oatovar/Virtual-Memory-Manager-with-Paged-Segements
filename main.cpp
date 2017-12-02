@@ -91,12 +91,12 @@
 			processList[tempPID - 100].size = tempSize;
 		}
 	
-		cout << "Total Number of Pages: " << totalPages << " "
-			 << "Segment Length: " << segmentLength << " "
-			 << "Page Size: " << pageSize << " "
-			 << "Frames Per Process: " << framesPerProcess << " "
-			 << "X: " << x << " "
-			 << "Min: " << min << " " << "Max: " << max << " "
+		cout << "Total Number of Pages: " << totalPages << " | "
+			 << "Segment Length: " << segmentLength << " | "
+			 << "Page Size: " << pageSize << " | "
+			 << "Frames Per Process: " << framesPerProcess << " | "
+			 << "X: " << x << " | "
+			 << "Min: " << min << " | " << "Max: " << max << " | "
 			 << "Process Count: " << processCount << endl << endl;
 	
 		/*for (int i = 0; i < processCount; i++) {
@@ -107,7 +107,7 @@
 
 			if (regex_search(bufferString, matchResults, end)) {
 				memoryRequest temp;
-				temp.segment = stoi(matchResults[1].str());
+				temp.addressSpace = stoi(matchResults[1].str());
 				temp.offset = -1;
 			
 				pageRequests.insert(pageRequests.end(), temp);
@@ -116,11 +116,13 @@
 				regex_search(bufferString, matchResults, pidAddr);
 			
 				int tempAddress = stoi(matchResults[2].str(), nullptr, 16);
+				int segmentSize = (segmentLength * pageSize);
 				cout << "HEX: 0x" << matchResults[2].str() << " DEC: " << tempAddress << endl;
 			
 				memoryRequest temp;
-			
-				temp.segment = stoi(matchResults[1].str());
+				temp.addressSpace = stoi(matchResults[1].str());
+				temp.segment = tempAddress / segmentSize;
+				tempAddress -= (temp.segment * segmentSize);
 				temp.page = tempAddress / pageSize;
 				temp.offset = tempAddress - (temp.page * pageSize);
 			
@@ -132,7 +134,8 @@
 		cout << "Request Count: " << pageRequests.size() << endl;
 	
 		for (list<memoryRequest>::iterator itr = pageRequests.begin(); itr != pageRequests.end(); ++itr) {
-			cout << "Segment: " << setw(3) << itr->segment << " "
+			cout << "PID: " << setw(3) << itr->addressSpace << " "
+				 << "Segment: " << setw(3) << itr->segment << " "
 				 << "Page: " << setw(2) << itr->page << " "
 				 << "Offset: " << setw(3) << itr->offset
 				 << endl;
