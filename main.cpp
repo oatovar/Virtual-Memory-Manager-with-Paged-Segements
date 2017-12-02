@@ -109,7 +109,7 @@
 			 << "Frames Per Process: " << framesPerProcess << " | "
 			 << "X: " << x << " | "
 			 << "Min: " << min << " | " << "Max: " << max << " | "
-			 << "Process Count: " << processCount << endl << endl;
+			 << "Process Count: " << processCount << endl;
 	
 		/*for (int i = 0; i < processCount; i++) {
 			cout << "PID: " << processList[i].pid << " SIZE: " << processList[i].size << endl << endl;
@@ -129,7 +129,7 @@
 			
 				int tempAddress = stoi(matchResults[2].str(), nullptr, 16);
 				int segmentSize = (segmentLength * pageSize);
-				cout << "HEX: 0x" << matchResults[2].str() << " DEC: " << tempAddress << endl;
+				//cout << "HEX: 0x" << matchResults[2].str() << " DEC: " << tempAddress << endl;
 			
 				memoryRequest temp;
 				temp.addressSpace = stoi(matchResults[1].str());
@@ -141,7 +141,7 @@
 				pageRequests.insert(pageRequests.end(), temp);
 			}
 		}
-		cout << endl;
+		/*cout << endl;
 	
 		cout << "Request Count: " << pageRequests.size() << endl;
 		int index = 0;
@@ -154,16 +154,8 @@
 				 << "Offset: " << setw(3) << itr->offset
 				 << endl;
 		}
-		cout << endl;
-	
-		cout << "Frames Table" << endl;
-		for (list<frame>::iterator itr = framesTable.begin(); itr != framesTable.end(); ++itr) {
-			cout << "Address Space: " << setw(4) << itr->addressSpace << " "
-				 << "Segment #: " << setw(3) << itr->segment << " "
-				 << "Page #: " << setw(3) << itr->page
-				 << endl;
-		}
-		cout << endl;
+		cout << endl;*/
+		
 		//This shows the Segment Tables created with their respective Page Table and Page addresses
 		for (list<SegmentTable>::iterator itr = SegmentTables.begin(); itr != SegmentTables.end(); itr++) {
 			cout << "Segment Table" << endl;
