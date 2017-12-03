@@ -157,13 +157,14 @@
 		cout << endl;*/
 		
 		//This shows the Segment Tables created with their respective Page Table and Page addresses
-		for (list<SegmentTable>::iterator itr = SegmentTables.begin(); itr != SegmentTables.end(); itr++) {
+		/*for (list<SegmentTable>::iterator itr = SegmentTables.begin(); itr != SegmentTables.end(); itr++) {
 			cout << "Segment Table" << endl;
 			itr->print();
-		}
+		}*/
 		
 		fifo(framesTable, pageRequests, processList, framesPerProcess, processCount);
 		lifo(framesTable, pageRequests, processList, framesPerProcess, processCount);
+		ldf(framesTable, pageRequests, processList, framesPerProcess, processCount);
 	
 		return 0;
 	}
