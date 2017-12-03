@@ -16,6 +16,7 @@ void reset(list<frame> currentFrames, processObject processProperties[], int k)
 		frameItr->addressSpace = 0;
 		frameItr->segment = 0;
 		frameItr->page = 0;
+		frameItr->time = 0;
 		frameItr++;
 	}
 	//Reset process objects to reinitialize frame count and page faults to zero
@@ -408,8 +409,84 @@ void opt()
 {
 }
 
-void workingSet()
+/*
+ * Steps for working set algorithm
+ * Check if page is in memory
+ * If page not found in memory then check to see which pages must be removed from working set
+ * Finally insert page into working set
+*/
+void workingSet(list<frame> currentFrames, list<memoryRequest> currentRequests, processObject processProperties[], int delta, int k)
 {
+	cout << endl << "Starting Working Set algorithm." << endl;
+	reset(currentFrames, processProperties, k);
+	list<memoryRequest>::iterator requestItr = currentRequests.begin();
+	list<frame>::iterator frameItr = currentFrames.begin();
+	int totalPageFaults = 0;
+	bool found = false;
+	
+	while(requestItr != currentRequests.end()) {
+		found = false;
+		frameItr = currentFrames.begin();
+		if (requestItr->segment != -1) {
+			while((frameItr != currentFrames.end()) && (found == false)) {
+				if ((frameItr->addressSpace == requestItr->addressSpace) && (frameItr->segment == requestItr->segment) && (frameItr->page == requestItr->page)) {
+					//cout << "Page in frame buffer." << endl;
+					found = true;//Page found
+					frameItr->time = 1;//Reset the time back to 1
+				}
+				frameItr->time = frameItr->time + 1;
+				frameItr++;
+			}
+			frameItr = currentFrames.begin();
+			while(frameItr != currentFrames.end()) {
+				if(frameItr->addressSpace == requestItr->addressSpace) {
+					if (frameItr->time > delta) {
+						//reset the frame to empty values
+						//this is only done if the page
+						//in the frame has not been used longer than delta
+						/* Used for debugging
+						cout << "Removing frame from working set!" << endl;
+						cout << "PID: " << frameItr->addressSpace << " "
+							 << "Segment: " << frameItr->segment << " "
+							 << "Page: " << frameItr->page << endl;
+						*/
+						frameItr->addressSpace = 0;
+						frameItr->segment = 0;
+						frameItr->page = 0;
+						frameItr->time = 0;
+					}
+				}
+				frameItr++;
+			}
+			frameItr = currentFrames.begin();
+			while(found == false) {
+				if(frameItr->addressSpace == 0) {
+					processProperties[requestItr->addressSpace - 100].pageFault++;
+					found = true;
+					frameItr->addressSpace = requestItr->addressSpace;
+					frameItr->segment = requestItr->segment;
+					frameItr->page = requestItr->page;
+					frameItr->time = 1;
+				}
+				frameItr++;
+			}
+		}
+		else {
+			//Used for debugging
+			//cout << "PID: " << requestItr->segment << " finished!" << endl;
+		}
+		requestItr++;
+	}
+	cout << endl << "RESULTS" << endl;
+	cout << "---------------------------------------------" << endl;
+	for (int i = 0; i < k; i++) {
+		cout << "Page Faults for Process " << i + 100 << ": "
+			 << processProperties[i].pageFault << endl;
+			 
+		totalPageFaults += processProperties[i].pageFault;
+	}
+	cout << "Total Page Faults: " << totalPageFaults << endl;
+	cout << "---------------------------------------------" << endl;
 }
 
 #endif
