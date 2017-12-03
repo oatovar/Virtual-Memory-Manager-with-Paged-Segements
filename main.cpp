@@ -165,6 +165,7 @@
 		fifo(framesTable, pageRequests, processList, framesPerProcess, processCount);
 		lifo(framesTable, pageRequests, processList, framesPerProcess, processCount);
 		ldf(framesTable, pageRequests, processList, framesPerProcess, processCount);
+		workingSet(framesTable, pageRequests, processList, framesPerProcess, processCount);
 	
 		return 0;
 	}
