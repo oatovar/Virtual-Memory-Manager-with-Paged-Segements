@@ -21,6 +21,7 @@ struct frame {
 	int addressSpace = 0; //Address Space Number/PID
 	int segment = 0; //Segment Number
 	int page = 0; //Page Number
+	int time = 0; //Time since last used
 };
 
 #endif
