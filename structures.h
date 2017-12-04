@@ -22,6 +22,7 @@ struct frame {
 	int segment = 0; //Segment Number
 	int page = 0; //Page Number
 	int time = 0; //Time since last used
+	int futureCounter = 0;
 };
 
 #endif
