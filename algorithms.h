@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void reset(list<frame> currentFrames, processObject processProperties[], int k)
+void reset(list<frame> &currentFrames, processObject processProperties[], int k)
 {
 	list<frame>::iterator frameItr = currentFrames.begin();
 	//Reset the frames table to simulate a fresh start
@@ -17,6 +17,7 @@ void reset(list<frame> currentFrames, processObject processProperties[], int k)
 		frameItr->segment = 0;
 		frameItr->page = 0;
 		frameItr->time = 0;
+		frameItr->futureCounter = 0;
 		frameItr++;
 	}
 	//Reset process objects to reinitialize frame count and page faults to zero
@@ -33,10 +34,20 @@ void printFramesTable(list<frame> currentFrames)
 	for (list<frame>::iterator itr = currentFrames.begin(); itr != currentFrames.end(); ++itr) {
 		cout << "Address Space: " << setw(4) << itr->addressSpace << " "
 			 << "Segment #: " << setw(3) << itr->segment << " "
-			 << "Page #: " << setw(3) << itr->page
+			 << "Page #: " << setw(3) << itr->page << " "
+			 << "Count #: " << setw(3) << itr->futureCounter
 			 << endl;
 	}
 	cout << endl;
+}
+
+void resetCount(list<frame> &currentFrames)
+{
+	for(list<frame>::iterator itr = currentFrames.begin(); itr != currentFrames.end(); itr++) {
+		itr->futureCounter = 0;
+	}
+	//cout << "Frames table after resetting count." << endl;
+	//printFramesTable(currentFrames);
 }
 
 void fifo(list<frame> currentFrames, list<memoryRequest> currentRequests, processObject processProperties[], int framesPerProcess, int k)
@@ -146,11 +157,6 @@ void fifo(list<frame> currentFrames, list<memoryRequest> currentRequests, proces
 	}
 	cout << "Total Page Faults: " << totalPageFaults << endl;
 	cout << "---------------------------------------------" << endl;
-}
-
-void lru()
-{
-
 }
 
 void lifo(list<frame> currentFrames, list<memoryRequest> currentRequests, processObject processProperties[], int framesPerProcess, int k)
@@ -405,8 +411,273 @@ void ldf(list<frame> currentFrames, list<memoryRequest> currentRequests, process
 	cout << "---------------------------------------------" << endl;
 }
 
-void opt()
+void lru(list<frame> currentFrames, list<memoryRequest> currentRequests, vector<processObject> pList, int framesPerProcess, int x)
 {
+	cout << endl << "Starting LRU-X replacement algorithm." << endl;
+	list<memoryRequest>::iterator requestItr = currentRequests.begin();
+	list<frame>::iterator frameItr = currentFrames.begin();
+	int totalPageFaults = 0;
+	bool found = false;
+	//int addressSpace = requestItr->addressSpace - 100;
+	//printFramesTable(currentFrames);
+	while (requestItr != currentRequests.end()) {
+		found = false;
+		if (requestItr->offset != -1) {
+			if (pList[requestItr->addressSpace - 100].currentFrameCount < framesPerProcess) {
+				while(frameItr != currentFrames.end()) {
+					if ((frameItr->addressSpace == requestItr->addressSpace) && (frameItr->segment == requestItr->segment) && (frameItr->page == requestItr->page)) {
+						//Frame already contains page needed. No need to use a new frame buffer.
+						//cout << "Page in frame buffer." << endl;
+						found = true;
+						frameItr = currentFrames.begin();
+						requestItr++;
+						break;
+					}
+					else {
+						//If frame occupied by another page either by the same process or another process
+						frameItr++; //Advance to next frame. In this case moves on to an older frame.
+					}
+				}
+				frameItr = currentFrames.begin();
+				while((frameItr != currentFrames.end()) && (found == false)) {
+					if (frameItr->addressSpace == 0) {
+						//Copy page to the frame buffer
+						//cout << "Copying page into frame buffer." << endl;
+						frameItr->addressSpace = requestItr->addressSpace;
+						frameItr->segment = requestItr->segment;
+						frameItr->page = requestItr->page;
+						//Increase the count of frames that currently belong to the process
+						pList[requestItr->addressSpace - 100].currentFrameCount++;
+						pList[requestItr->addressSpace - 100].pageFault++;
+						//Break out of loop and move on to the next request
+						found = true;
+						frameItr = currentFrames.begin();
+						requestItr++;
+						break;
+					}
+					else {
+						frameItr++;
+					}
+				}
+			}
+			else {
+				frameItr = currentFrames.begin();
+				while(frameItr != currentFrames.end()) {
+					if ((frameItr->addressSpace == requestItr->addressSpace) && (frameItr->segment == requestItr->segment) && (frameItr->page == requestItr->page)) {
+						//Frame already contains page needed. No need to use a new frame buffer.
+						//cout << "Page in frame buffer." << endl;
+						found = true;
+						frameItr = currentFrames.erase(frameItr);
+						frame newFrame;
+						newFrame.addressSpace = requestItr->addressSpace;
+						newFrame.segment = requestItr->segment;
+						newFrame.page = requestItr->page;
+						currentFrames.push_back(newFrame);
+						frameItr = currentFrames.begin();
+						requestItr++;
+						break;
+					}
+					else {
+						frameItr++;
+					}
+				}
+				int counter = 1;
+				frameItr = currentFrames.begin();
+				while(frameItr != currentFrames.end() && (found == false)) {
+					if (frameItr->addressSpace == requestItr->addressSpace) {
+						//cout << "Replacing frame buffer." << endl;
+						//Remove the first page that came in
+						if (counter < x) {
+							counter++;
+							frameItr++;
+							continue;
+						}
+						frameItr = currentFrames.erase(frameItr);
+						//Update frames table to reflect the new order of pages in frame buffers
+						frame newFrame;
+						newFrame.addressSpace = requestItr->addressSpace;
+						newFrame.segment = requestItr->segment;
+						newFrame.page = requestItr->page;
+						currentFrames.push_back(newFrame);
+						pList[requestItr->addressSpace - 100].pageFault++;
+						//Break out of loop and move on to the next request
+						found = true;
+						frameItr = currentFrames.begin();
+						requestItr++;
+						break;
+					}
+					else {
+						frameItr++;//Go to the next frame. Since it's LIFO we move to an older frame.
+					}
+				}
+			}
+		}
+		//If the request does not belong to the process move to the next process
+		else {
+			//cout << "Process " << requestItr->addressSpace << " finished!" << endl;
+			frameItr = currentFrames.begin();
+			requestItr++;
+		}
+		//printFramesTable(currentFrames);
+	}
+	cout << "RESULTS" << endl;
+	for (int i = 0; i < pList.size(); i++) {
+		cout << "Page Faults for Process " << i + 100 << ": "
+			 << pList[i].pageFault << endl;
+		totalPageFaults += pList[i].pageFault;
+	}
+	cout << "Total Page Faults: " << totalPageFaults << endl;
+}
+
+void opt(list<frame> &currentFrames, list<memoryRequest> currentRequests, processObject processProperties[], int framesPerProcess, int k, int x)
+{
+	reset(currentFrames, processProperties, k);
+	cout << endl << "Starting OPT replacement algorithm." << endl;
+	list<memoryRequest>::iterator requestItr = currentRequests.begin();
+	list<memoryRequest>::iterator tempRequest;
+	list<frame>::iterator frameItr = currentFrames.begin();
+	list<frame>::iterator minFrame;
+	int totalPageFaults = 0;
+	bool found = false;
+	//int addressSpace = requestItr->addressSpace - 100;
+	while (requestItr != currentRequests.end()) {
+		resetCount(currentFrames);
+		//printFramesTable(currentFrames);
+		found = false;
+		/*cout << "PID: " << requestItr->addressSpace <<  " Segment: " << requestItr->segment
+			 << " Page: " << requestItr->page << endl;
+		*/
+		if (requestItr->offset != -1) {
+			if (processProperties[requestItr->addressSpace - 100].currentFrameCount < framesPerProcess) {
+				while(frameItr != currentFrames.end()) {
+					if ((frameItr->addressSpace == requestItr->addressSpace) && (frameItr->segment == requestItr->segment) && (frameItr->page == requestItr->page)) {
+                    	//Frame already contains page needed. No need to use a new frame buffer.
+                        //cout << "Page in frame buffer." << endl;
+						found = true;
+                        requestItr++;
+                        frameItr = currentFrames.begin();
+                        break;
+					}
+					else{
+						frameItr++;
+					}
+				}
+				frameItr = currentFrames.begin();
+				while((frameItr != currentFrames.end()) && (found == false)) {
+                    if (frameItr->addressSpace == 0) {
+                        //Copy page to the frame buffer
+                       // cout << "Copying page into frame buffer." << endl;
+                        frameItr->addressSpace = requestItr->addressSpace;
+                        frameItr->segment = requestItr->segment;
+                        frameItr->page = requestItr->page;
+                        //Increase the count of frames that currently belong to the process
+                        processProperties[requestItr->addressSpace - 100].currentFrameCount++;
+                        processProperties[requestItr->addressSpace - 100].pageFault++;
+                        //Break out of loop and move on to the next request
+						found = true;
+                        requestItr++;
+                        frameItr = currentFrames.begin();
+                        break;
+                    }
+					else {
+                        //If frame occupied by another page either by the same process or another process
+						frameItr++; //Advance to next frame.
+					}
+				}
+			}
+            else {	
+            	frameItr = currentFrames.begin();
+            	while(frameItr != currentFrames.end()) {
+					if ((frameItr->addressSpace == requestItr->addressSpace) && (frameItr->segment == requestItr->segment) && (frameItr->page == requestItr->page)) {
+						//Frame already contains page needed. No need to use a new frame buffer.
+						//cout << "Page in frame buffer!" << endl;
+						found = true;
+						frameItr = currentFrames.begin();
+						requestItr++;
+						break;
+					}
+					else {
+						frameItr++;
+					}
+				}
+				//printFramesTable(currentFrames);
+				frameItr = currentFrames.begin();
+				/*for(list<memoryRequest>::iterator itr = currentRequests.begin(); itr != currentRequests.end(); itr++) {
+					if (itr->offset != -1) {
+						cout << "PID: " << itr->addressSpace <<  " Segment: " << itr->segment
+							 << " Page: " << itr->page << endl;
+					}
+				}*/
+
+				while(frameItr != currentFrames.end() && (found == false)) {
+					if (frameItr->addressSpace == requestItr->addressSpace) {
+						tempRequest = requestItr;
+						int i = 0;
+						while((tempRequest != currentRequests.end()) && (i < x)) {
+							if (tempRequest->addressSpace == frameItr->addressSpace) {
+								i++;
+								//cout << "Segment: " << tempRequest->segment << " Look Ahead Val: " << i << endl;
+								if((frameItr->segment == tempRequest->segment) && (frameItr->page == tempRequest->page) && (tempRequest->offset != -1)) {
+									frameItr->futureCounter = frameItr->futureCounter + 1;
+									//cout << "Segment: " << frameItr->segment << " Count: " << frameItr->futureCounter << endl;
+								}
+								//cout << frameItr->segment << " " << frameItr->futureCounter << endl;
+							}
+							tempRequest++;			
+						}
+					}
+					frameItr++;
+				}
+				/*if (found == false) {
+					printFramesTable(currentFrames);
+				}*/
+				
+				frameItr = currentFrames.begin();
+				while((frameItr != currentFrames.end()) && (found == false)) {
+					if (frameItr->addressSpace == requestItr->addressSpace) {
+						minFrame = frameItr;
+						break;
+					}
+					frameItr++;
+				}
+				frameItr++;
+				while((frameItr != currentFrames.end()) && (found == false)) {
+					if ((frameItr->addressSpace == requestItr->addressSpace) && (requestItr->offset != -1)) {
+						if(frameItr->futureCounter <= minFrame->futureCounter) {
+							minFrame = frameItr;
+							/*cout << endl << "Segment: " << frameItr->segment << " Current Frame Counter: " << frameItr->futureCounter << endl;
+							cout << "Segment: " << minFrame->segment << " Min Frame Counter: " << minFrame->futureCounter << endl;*/
+						}
+					}
+					frameItr++;
+            	}
+				if (found == false) {
+					found = true;
+					//cout << "Replacing frame buffer." << endl;
+					minFrame->addressSpace = requestItr->addressSpace;
+					minFrame->segment = requestItr->segment;
+					minFrame->page = requestItr->page;
+					minFrame->futureCounter = 0;
+					processProperties[requestItr->addressSpace-100].pageFault++;
+					frameItr = currentFrames.begin();
+					requestItr++;
+				}
+            }
+		}
+        //If the request does not belong to the process move to the next process
+        else {
+        	//cout << "Process " << requestItr->addressSpace << " finished!" << endl;
+        	frameItr = currentFrames.begin();
+			requestItr++;
+		}
+	}
+	cout << "RESULTS" << endl;
+	for (int i = 0; i < k; i++) {
+		cout << "Page Faults for Process " << i + 100 << ": "
+			 << processProperties[i].pageFault << endl;
+		totalPageFaults += processProperties[i].pageFault;
+	}
+	cout << "Total Page Faults: " << totalPageFaults << endl;
 }
 
 /*
@@ -427,7 +698,7 @@ void workingSet(list<frame> currentFrames, list<memoryRequest> currentRequests, 
 	while(requestItr != currentRequests.end()) {
 		found = false;
 		frameItr = currentFrames.begin();
-		if (requestItr->segment != -1) {
+		if (requestItr->offset != -1) {
 			while((frameItr != currentFrames.end()) && (found == false)) {
 				if ((frameItr->addressSpace == requestItr->addressSpace) && (frameItr->segment == requestItr->segment) && (frameItr->page == requestItr->page)) {
 					//cout << "Page in frame buffer." << endl;
